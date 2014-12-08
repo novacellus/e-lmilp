@@ -1239,9 +1239,9 @@
                     </xsl:analyze-string>
                 </xsl:when>
                 <xsl:otherwise>
-                    <xsl:analyze-string select="." regex="\w+">
+                    <!--<xsl:analyze-string select="." regex="\w+">
                         <xsl:matching-substring></xsl:matching-substring>
-                    </xsl:analyze-string>
+                    </xsl:analyze-string>-->
                     <xsl:element name="tei:note">
                         <xsl:copy-of select="./(node()|text())"/>
                     </xsl:element>
