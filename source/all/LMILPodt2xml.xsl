@@ -9,9 +9,10 @@
     <xsl:key name="abbreviationes" match="tei:choice" use="tei:abbr"/>
     <!-- Elementy utworzone na potrzeby przetwarzania i inne tymczasowe znajdują się w przestzreni nazw lmilp -->
     <xsl:output indent="yes" method="xml"/>
-<!--    <xsl:strip-space elements="*"/>-->
+    <!-- <xsl:strip-space elements="*"/>-->
     <xsl:preserve-space elements="lmilp:Forma tei:form tei:entryFree"/>
     <!-- Dokąd dojść w przetwarzaniu? -->
+    <xsl:param name="azDo" select="'pass10'"/>
     <xsl:param name="file"/>
     <xsl:variable name="numbering_roman">
         <xsl:value-of select="'[IVX]+'"/>
@@ -77,8 +78,9 @@
         </xsl:variable>
         <xsl:variable name="pass15">
             <xsl:apply-templates select="$pass14" mode="pass15"/>
-        </xsl:variable>
-        <xsl:copy-of select="$pass13"/>
+        </xsl:variable>        
+        <xsl:copy-of select="$pass15">
+        </xsl:copy-of>
     </xsl:template>
     <!-- Szablon kopiowania -->
     <xsl:template match="@* | node()"
@@ -831,7 +833,7 @@
         </xsl:copy>
     </xsl:template>
 
-    <!-- Pass5: Etymologia / anomalia -->
+    <!-- Etymologia / anomalia -->
     <xsl:template match="lmilp:Haslo" mode="pass5">
         <xsl:copy>
             <!-- Grupowanie wg () -->
@@ -947,7 +949,7 @@
 
         </xsl:copy>
     </xsl:template>
-    <!-- Pass6: wyodrębnienie definicji pl i la -->
+    <!-- Wyodrębnienie definicji pl i la -->
     <xsl:template match="lmilp:Definicjaa" mode="pass6">
         <xsl:analyze-string select="." regex="(.+?)(;|\?)(.+)(\?)*">
             <xsl:matching-substring>
@@ -986,7 +988,7 @@
             </xsl:non-matching-substring>
         </xsl:analyze-string>
     </xsl:template>
-    <!-- Pass6: dodanie gramGrp-->
+    <!-- Dodanie gramGrp-->
     <xsl:template match="lmilp:Haslo|lmilp:grupaNumeracji|lmilp:grupaCytatu" mode="pass6">
         <xsl:copy>
             <xsl:for-each-group select="./node()" group-starting-with="lmilp:Paradygmat">
@@ -1029,7 +1031,7 @@
 
         </xsl:copy>
     </xsl:template>
-    <!-- pass7: Korekta: adresów oddzielonych średnikiem -->
+    <!-- Korekta: adresów oddzielonych średnikiem -->
     <xsl:template match="lmilp:Adres" mode="pass7">
         <xsl:call-template name="adres_korekta">
             <xsl:with-param name="string" select="."/>
@@ -1100,7 +1102,7 @@
             </xsl:otherwise>
         </xsl:choose>
     </xsl:template>
-    <!-- pass7: wyodrębnienie supra z lmilp:Kursywa -->
+    <!-- Wyodrębnienie supra z lmilp:Kursywa -->
     <xsl:template match="lmilp:Kursywa[matches(.,'supra')]" mode="pass7">
         <xsl:copy>
             <xsl:apply-templates mode="#current" select="@*"/>
@@ -1119,7 +1121,7 @@
         </xsl:copy>
         
     </xsl:template>
-    <!-- Pass7,8: Parsowanie wyrażeń z "supra" -->
+    <!-- Parsowanie wyrażeń z "supra" -->
     <xsl:template name="parse_supra">
         <xsl:param name="string"/>
         <xsl:element name="tei:xr">
@@ -1136,7 +1138,7 @@
             </xsl:analyze-string>
         </xsl:element>
     </xsl:template>
-    <!-- pass7: Etymologia: język -->
+    <!-- Etymologia: język -->
     <xsl:template match="lmilp:Etymologia" mode="pass7">
         <xsl:variable name="content" select="."/>
         <xsl:element name="tei:etym">
@@ -1251,7 +1253,7 @@
 
         </xsl:element>
     </xsl:template>
-    <!-- pass7: Formy graficzne -->
+    <!-- Formy graficzne -->
     <xsl:template match="lmilp:Forma/text()" mode="pass7">
         <xsl:analyze-string select="."
             regex="(
@@ -1387,7 +1389,7 @@
             </xsl:non-matching-substring>
         </xsl:analyze-string>-->
     </xsl:template>
-    <!-- pass7: Formy graficzne: etykiety scr, et, s -->
+    <!-- Formy graficzne: etykiety scr, et, s -->
     <xsl:template match="lmilp:Forma/lmilp:Kursywa" mode="pass7" priority="10">
         <xsl:choose>
             <xsl:when test="matches(.,'scr\.|et|s\.')">
@@ -1401,7 +1403,7 @@
             </xsl:otherwise>
         </xsl:choose>
     </xsl:template>
-    <!-- pass7: Słowniki -->
+    <!-- Słowniki -->
     <xsl:template match="lmilp:Slowniki" mode="pass7">
         <xsl:copy>
             <xsl:for-each select="node()">
@@ -1438,7 +1440,7 @@
             </xsl:for-each>
         </xsl:copy>
     </xsl:template>
-    <!-- pass7: Cytaty: 1) dwukropki 2) uwagi w nawiasach -->
+    <!-- Cytaty: 1) dwukropki 2) uwagi w nawiasach -->
     <xsl:template match="lmilp:Cytacja" mode="pass7">
         <xsl:for-each select="node()">
             <xsl:if test="not(self::text())">
@@ -1575,7 +1577,7 @@
 
         </xsl:element>
     </xsl:template>
-    <!-- pass8: TEIzacja -->
+    <!-- TEIzacja -->
     <!-- Tworzy @n lemmatu  -->
     <xsl:function name="lmilp:entry-nFromForm">
         <xsl:param name="entry" as="node()"/>
@@ -1596,7 +1598,6 @@
             </xsl:otherwise>
         </xsl:choose>
     </xsl:function>
-    
     <xsl:template match="lmilp:Forma" mode="pass8">
         <xsl:element name="tei:form">
             <xsl:apply-templates select="node()|@*|text()" mode="#current"/>
@@ -1625,7 +1626,6 @@
             </xsl:element>
         </xsl:if>
     </xsl:template>
-    <!-- Kolokacje wchodzące w skład definicji -->
     <xsl:template match="lmilp:Paradygmat" mode="pass8">
         <!-- Typowy paradygmat (z kreseczkami) -->
         <xsl:if test="matches(.,'-')">
@@ -1688,13 +1688,6 @@
             <xsl:apply-templates select="node()|@*|text()" mode="#current"/>
         </xsl:element>
     </xsl:template>
-    <!-- Wyodrębnia z definicji dodatkowe elementy nieujęte wcześniej -->
-<!--    <xsl:template match="lmilp:Definicjaa/text()">
-        <xsl:analyze-string select="." regex="^\s*(propr|transl)\.">
-            <xsl:matching-substring></xsl:matching-substring>
-        </xsl:analyze-string>    
-    </xsl:template>-->
-    
     <xsl:template match="lmilp:Kursywa" mode="pass8">
     <xsl:element name="tei:emph">
             <xsl:apply-templates select="node()|@*|text()" mode="#current"/>
@@ -1706,33 +1699,23 @@
             <xsl:apply-templates select="node()|@*|text()" mode="#current"/>
         </xsl:element>
     </xsl:template>
-    <xsl:template match="lmilp:Adres[parent::lmilp:grupaCytatu]" mode="pass13">
-        <xsl:if test="matches(.,'^\s*')">
-            <xsl:text> </xsl:text>
-        </xsl:if>
-        <xsl:call-template name="biblio"/>
-        <xsl:if test="matches(.,'\s*$')">
-            <xsl:text> </xsl:text>
-        </xsl:if>
-    </xsl:template>
-    <xsl:template match="lmilp:Adres[not(parent::lmilp:grupaCytatu)]" mode="pass13">
-        <xsl:if test="matches(.,'^\s*')">
-            <xsl:text> </xsl:text>
-        </xsl:if>
-        <xsl:element name="tei:cit">
-            <xsl:attribute name="type" select="'inline'"/>
-            <xsl:call-template name="biblio"/>
-        </xsl:element>
-        <xsl:if test="matches(.,'\s*$')">
-            <xsl:text> </xsl:text>
-        </xsl:if>
-    </xsl:template>
     <xsl:template match="lmilp:grupaNumeracji" mode="pass8">
         <!--Rozróznienie not i znaczeń -->
         <xsl:choose>
-            <xsl:when test="self::*[1][tei:label]">
+            <xsl:when test="*[1][self::tei:label]">
+                <xsl:variable name="label" select="translate(normalize-space(lower-case(*[1][self::tei:label])),'\.\|\]\[\)\(','')"/>
                 <xsl:element name="tei:note">
-                    <xsl:attribute name="type" select="'note'"/>
+                    <xsl:choose>
+                        <xsl:when test="$label eq 'constr'">
+                            <xsl:attribute name="type" select="'constr'"/>    
+                        </xsl:when>
+                        <xsl:when test="$label eq 'glossa'">
+                            <xsl:attribute name="type" select="'glossa'"/>    
+                        </xsl:when>
+                        <xsl:otherwise>
+                            <xsl:attribute name="type" select="'note'"/>
+                        </xsl:otherwise>
+                        </xsl:choose>
                     <xsl:apply-templates select="node()|@*|text()" mode="#current"/>
                 </xsl:element>
             </xsl:when>
@@ -1757,7 +1740,7 @@
     <xsl:template match="lmilp:ZwyklyTekst" mode="pass8">
         <xsl:apply-templates select="node()|@*|text()" mode="#current"/>
     </xsl:template>
-    <!-- pass9: tei:form i tei:gramGrp -->
+    <!-- tei:form i tei:gramGrp -->
     <xsl:template match="tei:entryFree" mode="pass9">
         <xsl:copy>
             <xsl:apply-templates select="@*" mode="#current"/>
@@ -1791,10 +1774,8 @@
             </xsl:for-each-group>
         </xsl:copy>
     </xsl:template>
-    
-    
-    <!-- Pass11: rozwiązanie supra -->
-    <xsl:template match="text()[matches(.,'supra')]" mode="pass11">
+    <!-- Rozwiązanie supra -->
+    <xsl:template match="text()[matches(.,'supra')]" mode="pass10">
             <xsl:analyze-string select="." regex="(\s*supra\s*[IVX]*,*\s*\d+(,*\s*\d+)*(\s*sqq)*\s*\.*\s*)(.+|$)">
                 <xsl:matching-substring>
                     <xsl:call-template name="parse_supra">
@@ -1814,8 +1795,40 @@
                 
         </xsl:copy>
     </xsl:template>
-    <!-- Pass11: Wnioskowanie -->
-    <xsl:template match="tei:form" mode="pass12">
+    <!-- Związki wchodzące w skład definicji z pominięciem: haseł odsyłaczowych, punktów na listach constr. -->
+    <xsl:template match="tei:entryFree//tei:sense[not(parent::tei:note[@type eq 'constr'])]|tei:note" mode="pass10">
+        <xsl:copy>
+            <xsl:apply-templates select="@*" mode="#current"/>
+            <xsl:for-each-group select="node()|text()"
+                group-adjacent="self::text()[following-sibling::tei:def or following-sibling::tei:cit] or self::tei:milestone[following-sibling::tei:def or following-sibling::tei:cit or following-sibling::tei:label[@type = 'numbering']]">
+                <xsl:choose>
+                    <xsl:when test="current-grouping-key() and current-group()[not(matches(normalize-space(current-group()),'^(;|,|:|\)|\()*$'))] and not(parent::entryFree[@type ='xref'])">
+                        <xsl:analyze-string select="current-group()" regex="^([\)\.;,]*)(.+?)([:\(\.;,]*)$">
+                            <xsl:matching-substring>
+                                <xsl:if test="regex-group(1)">
+                                    <xsl:value-of select="regex-group(1)"/>
+                                </xsl:if>
+                                <xsl:element name="tei:usg">
+                                    <xsl:attribute name="type" select="'colloc'"/>
+                                    <xsl:value-of select="regex-group(2)"/>
+                                </xsl:element>
+                                <xsl:if test="regex-group(3)">
+                                    <xsl:value-of select="regex-group(3)"/>
+                                </xsl:if>
+                            </xsl:matching-substring>
+                            <xsl:non-matching-substring>
+                                <xsl:value-of select="."/>
+                            </xsl:non-matching-substring>
+                        </xsl:analyze-string>
+                    </xsl:when>
+                    <xsl:otherwise>
+                        <xsl:apply-templates select="current-group()" mode="#current"/>
+                    </xsl:otherwise>
+                </xsl:choose></xsl:for-each-group>
+        </xsl:copy>
+    </xsl:template>
+    <!-- Wnioskowanie -->
+    <xsl:template match="tei:form" mode="pass11">
         <xsl:copy>
             <xsl:choose>
                 <xsl:when test="./descendant::tei:pos">
@@ -2331,10 +2344,10 @@
             </xsl:analyze-string>
         </xsl:element>
     </xsl:template>
-    <!-- Pass12: obróbka etykiet - przypisanie rozwiązań w spisie skrótów -->
+    <!-- Obróbka etykiet - przypisanie rozwiązań w spisie skrótów -->
     <xsl:template
         match="tei:ref[@type='vocabularia']|tei:def|tei:emph|tei:label[@type ne 'numbering']|tei:biblScope|tei:time"
-        mode="pass12" priority="10">
+        mode="pass11" priority="10">
         <xsl:if test="self::tei:label[@type eq 'note']">
             <xsl:copy>
                 <xsl:attribute name="type" select="'note'"/>
@@ -2345,12 +2358,16 @@
         </xsl:if>
         <xsl:if test="not(self::tei:label[@type eq 'note'])">
             <xsl:call-template name="label_target"/>
-            
         </xsl:if>
         
     </xsl:template>
-<xsl:template name="label_target">
+    <xsl:template name="label_target">
     <xsl:param name="type" required="no"/>
+        <xsl:variable name="nextNodeBeginsWithPoint">
+            <xsl:if test="matches(./following::node()[1],'^\.')">
+                <xsl:value-of select="'TRUE'"/>
+            </xsl:if>
+        </xsl:variable>
         <xsl:choose>
             <xsl:when test="self::tei:ref[@type='vocabularia']">
                 <xsl:copy>
@@ -2532,9 +2549,9 @@
                                     </xsl:choose>
                                 </xsl:matching-substring>
                                 <xsl:non-matching-substring>
-                                    <xsl:element name="{$orig}">
-                                        <xsl:value-of select="."/>
-                                    </xsl:element>
+                                        <xsl:element name="{$orig}">
+                                            <xsl:value-of select="."/>
+                                        </xsl:element>
                                 </xsl:non-matching-substring>
                             </xsl:analyze-string>
                         </xsl:when>
@@ -2665,19 +2682,123 @@
                 </xsl:copy>
             </xsl:when>
             <xsl:otherwise>
-                <xsl:copy-of select="."/>
+                <xsl:choose>
+                <xsl:when test="self::tei:emph[not(contains(.,'.'))] and $nextNodeBeginsWithPoint eq 'TRUE'">
+                    <xsl:for-each select="node()|text()">
+                        <xsl:choose>
+                            <xsl:when test=".[not(self::text())]">
+                                <xsl:copy-of select="."/>
+                            </xsl:when>
+                            <xsl:when test=".[self::text()]">
+                                <!-- Zachowujemy oryginalną nazwę elementu, by użyć dla non-matching -->
+                                <xsl:variable name="orig" select="name(parent::*)"/>
+                                <xsl:analyze-string select="concat(.,'.')" regex="((\s|\W|^)(\w+\.))">
+                                    <xsl:matching-substring>
+                                        <xsl:choose>
+                                            <!-- Zawiera nazwę domeny (astr. itp.)? -->
+                                            <xsl:when
+                                                test=" key('abbreviationes',lower-case( normalize-space(regex-group(3)) ),doc('fontes/abbreviationes.xml'))  and key('abbreviationes', lower-case( normalize-space(.) ), doc('fontes/abbreviationes.xml') )[tei:abbr/@type eq 'dom']">
+                                                <xsl:element name="tei:usg">
+                                                    <xsl:attribute name="norm"
+                                                        select="lower-case(lmilp:nor_pun(.))"/>
+                                                    <xsl:attribute name="type" select="'dom'"/>
+                                                    <xsl:attribute name="target"
+                                                        select="concat('abbr:',key('abbreviationes', lower-case(normalize-space(.)), doc('fontes/abbreviationes.xml'))/@xml:id)"/>
+                                                    <xsl:value-of select="regex-group(1)"/>
+                                                </xsl:element>
+                                            </xsl:when>
+                                            <!-- Zawiera nazwę pos? -->
+                                            <xsl:when
+                                                test="key('abbreviationes',lower-case(normalize-space(regex-group(3))),doc('fontes/abbreviationes.xml'))  and key('abbreviationes', lower-case(normalize-space(.)), doc('fontes/abbreviationes.xml') )[tei:abbr/@type eq 'pos']">
+                                                <xsl:element name="tei:label">
+                                                    <xsl:attribute name="norm"
+                                                        select="lower-case(lmilp:nor_pun(.))"/>
+                                                    <xsl:attribute name="type" select="'pos'"/>
+                                                    <xsl:attribute name="target"
+                                                        select="concat('abbr:',key('abbreviationes', lower-case(normalize-space(.)), doc('fontes/abbreviationes.xml'))/@xml:id)"/>
+                                                    <xsl:value-of select="regex-group(1)"/>
+                                                </xsl:element>
+                                            </xsl:when>
+                                            <xsl:when
+                                                test="key('abbreviationes',lower-case(normalize-space(regex-group(3))),doc('fontes/abbreviationes.xml'))  and key('abbreviationes', lower-case(normalize-space(.)), doc('fontes/abbreviationes.xml') )[tei:abbr/@type eq 'label']">
+                                                <xsl:element name="tei:label">
+                                                    <xsl:attribute name="norm"
+                                                        select="lower-case(lmilp:nor_pun(.))"/>
+                                                    <xsl:attribute name="type" select="'label'"/>
+                                                    <xsl:attribute name="target"
+                                                        select="concat('abbr:',key('abbreviationes', lower-case(normalize-space(.)), doc('fontes/abbreviationes.xml'))/@xml:id)"/>
+                                                    <xsl:value-of select="regex-group(1)"/>
+                                                </xsl:element>
+                                            </xsl:when>
+                                            <xsl:otherwise>
+                                                <xsl:choose>
+                                                    <xsl:when
+                                                        test="key('abbreviationes',normalize-space(regex-group(3)),doc('fontes/abbreviationes.xml'))">
+                                                        <xsl:element name="tei:label">
+                                                            <xsl:attribute name="type"
+                                                                select="key('abbreviationes', normalize-space(.), doc('fontes/abbreviationes.xml'))/tei:abbr/@type"/>
+                                                            <xsl:attribute name="target"
+                                                                select="concat('abbr:',key('abbreviationes', normalize-space(.), doc('fontes/abbreviationes.xml'))/@xml:id)"/>
+                                                            <xsl:value-of select="regex-group(1)"/>
+                                                        </xsl:element>
+                                                    </xsl:when>
+                                                    <xsl:otherwise>
+                                                        <xsl:element name="tei:emph">
+                                                            <xsl:value-of select="."/>
+                                                        </xsl:element>
+                                                    </xsl:otherwise>
+                                                </xsl:choose>
+                                            </xsl:otherwise>
+                                        </xsl:choose>
+                                    </xsl:matching-substring>
+                                    <xsl:non-matching-substring>
+                                        <xsl:element name="{$orig}">
+                                            <xsl:value-of select="."/>
+                                        </xsl:element>
+                                    </xsl:non-matching-substring>
+                                </xsl:analyze-string>
+                            </xsl:when>
+                        </xsl:choose>
+                    </xsl:for-each>
+                    
+                </xsl:when>
+                    <xsl:otherwise>
+                        <xsl:copy-of select="."/>
+                    </xsl:otherwise>    
+                </xsl:choose>
+                
+                
             </xsl:otherwise>
         </xsl:choose>
     </xsl:template>
-
     <!-- Pozbawia spacji i punktuacji -->
     <xsl:function name="lmilp:nor_pun">
         <xsl:param name="string"/>
         <xsl:value-of select="translate( normalize-space($string), '[., ]', '' )"/>
     </xsl:function>
-
-    <!-- pass13: numery stron i wierszy -->
-    <xsl:template match="node()/text()" mode="pass14">
+    <xsl:template match="lmilp:Adres[parent::lmilp:grupaCytatu]" mode="pass12">
+        <xsl:if test="matches(.,'^\s*')">
+            <xsl:text> </xsl:text>
+        </xsl:if>
+        <xsl:call-template name="biblio"/>
+        <xsl:if test="matches(.,'\s*$')">
+            <xsl:text> </xsl:text>
+        </xsl:if>
+    </xsl:template>
+    <xsl:template match="lmilp:Adres[not(parent::lmilp:grupaCytatu)]" mode="pass12">
+        <xsl:if test="matches(.,'^\s*')">
+            <xsl:text> </xsl:text>
+        </xsl:if>
+        <xsl:element name="tei:cit">
+            <xsl:attribute name="type" select="'inline'"/>
+            <xsl:call-template name="biblio"/>
+        </xsl:element>
+        <xsl:if test="matches(.,'\s*$')">
+            <xsl:text> </xsl:text>
+        </xsl:if>
+    </xsl:template>
+    <!-- Numery stron i wierszy -->
+    <xsl:template match="node()/text()" mode="pass13">
         <xsl:analyze-string select="." regex="\|">
             <xsl:matching-substring>
                 <xsl:element name="tei:milestone">
@@ -2703,10 +2824,8 @@
             </xsl:non-matching-substring>
         </xsl:analyze-string>
     </xsl:template>
-    
-    
-    <!-- pass11: zliczanie liczby wierszy -->
-    <xsl:template match="tei:milestone[@unit eq 'lb']" mode="pass15">
+    <!-- Zliczanie liczby wierszy -->
+    <xsl:template match="tei:milestone[@unit eq 'lb']" mode="pass14">
         <xsl:copy>
             <!-- Sprawdza xml:id strony -->
             <xsl:variable name="this_page_id" select="normalize-space(./preceding::tei:milestone[@unit eq 'page'][1]/@xml:id)"/>
@@ -2722,43 +2841,6 @@
             </xsl:attribute>
         </xsl:copy>
     </xsl:template>
-    <!-- Związki wchodzące w skład definicji z pominięciem haseł odsyłaczowych -->
-    <xsl:template match="tei:entryFree//tei:sense|tei:note" mode="pass11">
-        <xsl:copy>
-            <xsl:apply-templates select="@*" mode="#current"/>
-            <xsl:for-each-group select="node()|text()"
-                group-adjacent="self::text()[following-sibling::tei:def or following-sibling::tei:cit] or self::tei:milestone[following-sibling::tei:def or following-sibling::tei:cit or following-sibling::tei:label[@type = 'numbering']]">
-                <xsl:choose>
-                    <xsl:when test="current-grouping-key() and current-group()[not(matches(normalize-space(current-group()),'^(;|,|:|\)|\()*$'))] and not(parent::entryFree[@type ='xref'])">
-                        <xsl:analyze-string select="current-group()" regex="^([\)\.;,]*)(.+?)([:\(\.;,]*)$">
-                            <xsl:matching-substring>
-                                <xsl:if test="regex-group(1)">
-                                    <xsl:value-of select="regex-group(1)"/>
-                                </xsl:if>
-                                <xsl:element name="tei:usg">
-                                    <xsl:attribute name="type" select="'colloc'"/>
-                                    <xsl:value-of select="regex-group(2)"/>
-                                </xsl:element>
-                                <xsl:if test="regex-group(3)">
-                                    <xsl:value-of select="regex-group(3)"/>
-                                </xsl:if>
-                            </xsl:matching-substring>
-                            <xsl:non-matching-substring>
-                                <xsl:value-of select="."/>
-                            </xsl:non-matching-substring>
-                        </xsl:analyze-string>
-                    </xsl:when>
-                    <xsl:otherwise>
-                        <xsl:apply-templates select="current-group()" mode="#current"/>
-                    </xsl:otherwise>
-                </xsl:choose>
-                
-                
-            </xsl:for-each-group>
-        </xsl:copy>
-    </xsl:template>
-    
-    
 </xsl:stylesheet>
 <!--<regex>
     1:<xsl:value-of select="regex-group(1)"/>
