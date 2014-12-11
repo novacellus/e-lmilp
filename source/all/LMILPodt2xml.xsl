@@ -173,7 +173,7 @@
     <!-- Pass2b: Noty -->
     <xsl:template match="lmilp:Kursywa" mode="pass2b">
         <xsl:choose>
-            <xsl:when test="matches(.,'^\s*N\.')">
+            <xsl:when test="matches(.,'^\s*N\.(\s*(constr\.|glossam))*')">
                 <xsl:element name="tei:label">
                     <xsl:attribute name="type" select="'note'"/>
                     <xsl:apply-templates mode="#current"/>
@@ -1706,7 +1706,7 @@
                 <xsl:variable name="label" select="translate(normalize-space(lower-case(*[1][self::tei:label])),'\.\|\]\[\)\(','')"/>
                 <xsl:element name="tei:note">
                     <xsl:choose>
-                        <xsl:when test="$label eq 'constr'">
+                        <xsl:when test="matches($label, '[Cc]onstr')">
                             <xsl:attribute name="type" select="'constr'"/>    
                         </xsl:when>
                         <xsl:when test="$label eq 'glossa'">
@@ -2841,6 +2841,97 @@
             </xsl:attribute>
         </xsl:copy>
     </xsl:template>
+    <!-- Wyodrębnianie grup kolokacji-->
+    <xsl:template match="tei:sense" mode="pass15">
+        <xsl:copy>            
+            <xsl:attribute name="orig" select="@orig"/>
+            <xsl:attribute name="n" select="@n"/>
+            <xsl:for-each-group select="node()|text()" 
+                group-starting-with="tei:label[@target='abbr:sq.label'][preceding-sibling::*[normalize-space(.) ne ''][1][self::tei:label[@type='numbering']]]">
+                <xsl:choose>
+                    <xsl:when test="current-group()[1][self::tei:label[@target='abbr:sq.label'][preceding-sibling::*[normalize-space(.) ne ''][1][self::tei:label[@type='numbering']]]]">
+                        <xsl:for-each-group select="current-group()" group-ending-with="tei:cit|tei:note">
+                            <xsl:choose>
+                                <xsl:when test="current-group()[last()][self::tei:cit|self::tei:note] and current-group()[1][self::tei:label[@target='abbr:sq.label']]">
+                                    <xsl:element name="tei:gramGrp">
+                                        <xsl:call-template name="extractPrepositionalColloc">
+                                            <xsl:with-param name="tree">
+                                                <xsl:apply-templates select="current-group()[position() lt last()]" mode="#current"/>
+                                            </xsl:with-param>
+                                        </xsl:call-template>
+                                    </xsl:element>
+                                    <xsl:apply-templates select="current-group()[position() = last()]" mode="#current"/>
+                                </xsl:when>
+                                <xsl:otherwise>
+                                    <xsl:choose>
+                                            <xsl:when test="current-group()[1][self::tei:label[@target='abbr:sq.label']]">
+                                                <xsl:element name="tei:gramGrp">
+                                                    <xsl:call-template name="extractPrepositionalColloc">
+                                                        <xsl:with-param name="tree">
+                                                            <xsl:apply-templates select="current-group()" mode="#current"/>
+                                                        </xsl:with-param>
+                                                    </xsl:call-template>
+                                                </xsl:element>
+                                            </xsl:when>
+                                        <xsl:otherwise>
+                                            <xsl:apply-templates select="current-group()" mode="#current"/>
+                                        </xsl:otherwise>
+                                    </xsl:choose>
+                                    
+                                </xsl:otherwise>
+                            </xsl:choose>
+                        </xsl:for-each-group>
+                    </xsl:when>
+                    <xsl:otherwise>
+                        <xsl:apply-templates mode="pass15" select="current-group()"/>
+                    </xsl:otherwise>
+                </xsl:choose>
+                
+            </xsl:for-each-group>
+                
+        </xsl:copy>
+    </xsl:template>
+    <xsl:template name="extractPrepositionalColloc">
+        <xsl:param name="tree"/>
+        <!--<tree><xsl:copy-of select="$tree"/></tree>
+        -->
+        <xsl:for-each select="$tree/node()">
+            <xsl:choose>
+                <xsl:when test="self::text()[preceding-sibling::*[normalize-space(.) ne ''][1][self::tei:label[@target='abbr:sq.label']]]">
+                    <xsl:analyze-string select="." regex="(\s*\w+\s*)">
+                        <xsl:matching-substring>
+                            <xsl:element name="tei:gram">
+                                <xsl:attribute name="type" select="'collocPrep'"/>
+                                <xsl:attribute name="norm" select="normalize-space(regex-group(1))"/>
+                                <xsl:value-of select="regex-group(1)"/>
+                            </xsl:element>
+                        </xsl:matching-substring>
+                        <xsl:non-matching-substring>
+                            <xsl:value-of select="."/>
+                        </xsl:non-matching-substring>
+                    </xsl:analyze-string>
+                </xsl:when>
+                <xsl:otherwise>
+                    <xsl:copy-of select="."/>
+                </xsl:otherwise>
+            </xsl:choose>
+                
+        </xsl:for-each>
+     
+        <!--<xsl:copy>
+            <xsl:apply-templates select="$tree"/>
+        </xsl:copy>-->
+        <!--
+        <xsl:for-each select=""></xsl:for-each>-->
+        <!--//tei:sense/tei:gramGrp/tei:label[@target='abbr:sq.label']/following-sibling::text()[normalize-space(.) ne ''][1]
+        <tei:gramGrp>
+            <tei:label norm="sq" type="label" target="abbr:sq.label">sq.</tei:label> sub <tei:label norm="c" type="label" target="abbr:c.label">c.</tei:label>
+            <tei:label type="gram" target="abbr:abl.gram"> abl.</tei:label>
+            <tei:emph> </tei:emph>
+        </tei:gramGrp>-->
+    </xsl:template>
+    <!-- Wyodrębnia przyimek z sekwencji: sq. ... -->
+        
 </xsl:stylesheet>
 <!--<regex>
     1:<xsl:value-of select="regex-group(1)"/>
