@@ -78,8 +78,8 @@
         </xsl:variable>
         <xsl:variable name="pass15">
             <xsl:apply-templates select="$pass14" mode="pass15"/>
-        </xsl:variable>
-        <xsl:copy-of select="$pass12">
+        </xsl:variable>        
+        <xsl:copy-of select="$pass15">
         </xsl:copy-of>
     </xsl:template>
     <!-- Szablon kopiowania -->
@@ -2234,8 +2234,6 @@
                                 <xsl:if test="not ( matches (regex-group(2),'^\s*(I|i)(b|d)\.') )">
                                     <xsl:analyze-string select="regex-group(2)" regex="\[NRSTRONY:\s*\d+\]">
                                         <xsl:non-matching-substring>
-                                            <!--<xsl:variable name="joined-strings" select="string-join(.)"/>-->
-                                            <!--<xsl:value-of select="concat('aa',.,'bb')"></xsl:value-of>-->
                                             <xsl:variable name="siglum_origin" select="normalize-space(translate(.,' \*\|',''))"/>
                                             <xsl:choose>
                                                 <xsl:when test="key('sigla',$siglum_origin,doc('fontes/fontes.xml'))">
@@ -2778,7 +2776,6 @@
         <xsl:param name="string"/>
         <xsl:value-of select="translate( normalize-space($string), '[., ]', '' )"/>
     </xsl:function>
-    
     <xsl:template match="lmilp:Adres[parent::lmilp:grupaCytatu]" mode="pass12">
         <xsl:if test="matches(.,'^\s*')">
             <xsl:text> </xsl:text>
@@ -2788,7 +2785,6 @@
             <xsl:text> </xsl:text>
         </xsl:if>
     </xsl:template>
-    
     <xsl:template match="lmilp:Adres[not(parent::lmilp:grupaCytatu)]" mode="pass12">
         <xsl:if test="matches(.,'^\s*')">
             <xsl:text> </xsl:text>
