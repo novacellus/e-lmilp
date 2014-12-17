@@ -79,7 +79,7 @@
         <xsl:variable name="pass15">
             <xsl:apply-templates select="$pass14" mode="pass15"/>
         </xsl:variable>
-        <xsl:copy-of select="$pass15">
+        <xsl:copy-of select="$pass12">
         </xsl:copy-of>
     </xsl:template>
     <!-- Szablon kopiowania -->
@@ -139,7 +139,7 @@
     </xsl:template>
     <xsl:template match="text:list-style" mode="pass1"/>
     <!-- Pass2a: Ujęcie spacji, kropek w sąsiadujący tag -->
-    <xsl:template match="text()[matches(.,'^(\s+|\s*\|\s*)$')]|text()[normalize-space(.) eq ',']|node()[normalize-space(.) eq '|\W']|text()[matches(.,'^(\s*\.\s*)$')]"
+    <xsl:template match="text()[matches(.,'^(\s+|\s*\|\s*)$')]|text()[normalize-space(.) eq ',']|node()[normalize-space(.) eq '|\W']|node()[matches(.,'^(\s*\.\s*)$')]"
         mode="pass2a">
         <xsl:if test="./preceding-sibling::*[1]">
             <xsl:element name="{name(./preceding-sibling::*[1])}">
@@ -2778,6 +2778,7 @@
         <xsl:param name="string"/>
         <xsl:value-of select="translate( normalize-space($string), '[., ]', '' )"/>
     </xsl:function>
+    
     <xsl:template match="lmilp:Adres[parent::lmilp:grupaCytatu]" mode="pass12">
         <xsl:if test="matches(.,'^\s*')">
             <xsl:text> </xsl:text>
@@ -2787,6 +2788,7 @@
             <xsl:text> </xsl:text>
         </xsl:if>
     </xsl:template>
+    
     <xsl:template match="lmilp:Adres[not(parent::lmilp:grupaCytatu)]" mode="pass12">
         <xsl:if test="matches(.,'^\s*')">
             <xsl:text> </xsl:text>
