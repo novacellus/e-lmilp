@@ -1675,8 +1675,12 @@
     <xsl:template match="lmilp:grupaCytatu" mode="pass8">
         <xsl:element name="tei:cit">
             <xsl:apply-templates select="@*" mode="#current"/>
+            <xsl:if test="preceding-sibling::node()[1][self::text()][matches(normalize-space(.),'\($')] 
+                or following-sibling::node()[1][self::text()][matches(normalize-space(.),'^\)')]">
+                <xsl:attribute name="type" select="'inline'"/>
+            </xsl:if>
             <xsl:apply-templates select="node()|@*|text()" mode="#current"/>
-        </xsl:element>
+         </xsl:element>
     </xsl:template>
     <xsl:template match="lmilp:grupaNumeracji" mode="pass8">
         <!--Rozróznienie not i znaczeń -->
@@ -2755,7 +2759,7 @@
         <xsl:param name="string"/>
         <xsl:value-of select="translate( normalize-space($string), '[., ]', '' )"/>
     </xsl:function>
-    <xsl:template match="lmilp:Adres[parent::lmilp:grupaCytatu]" mode="pass12">
+    <xsl:template match="lmilp:Adres[parent::tei:cit]" mode="pass12">
         <xsl:if test="matches(.,'^\s*')">
             <xsl:text> </xsl:text>
         </xsl:if>
@@ -2764,7 +2768,7 @@
             <xsl:text> </xsl:text>
         </xsl:if>
     </xsl:template>
-    <xsl:template match="lmilp:Adres[not(parent::lmilp:grupaCytatu)]" mode="pass12">
+    <xsl:template match="lmilp:Adres[not(parent::tei:cit)]" mode="pass12">
         <xsl:if test="matches(.,'^\s*')">
             <xsl:text> </xsl:text>
         </xsl:if>
