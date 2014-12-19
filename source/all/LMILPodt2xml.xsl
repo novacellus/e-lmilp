@@ -1367,27 +1367,6 @@
                 </xsl:analyze-string>
             </xsl:non-matching-substring>
         </xsl:analyze-string>
-        <!--        <xsl:analyze-string select="regex-group(2)" regex="(
-            (scr\.|et)*
-            (\s*)
-            ( (\w+)(,*) )+
-            )" flags="x">
-            <xsl:matching-substring>
-                <xsl:if test="regex-group(2)">
-                    <xsl:element name="tei:label">
-                        <xsl:attribute name="type" select="'variants'"/>
-                        <xsl:value-of select="regex-group(2)"/>
-                        <xsl:value-of select="regex-group(3)"/>
-                    </xsl:element>
-                </xsl:if>
-                <xsl:for-each select="regex-group(4)">
-                    
-                </xsl:for-each>
-            </xsl:matching-substring>
-            <xsl:non-matching-substring>
-                <xsl:value-of select="regex-group(2)"/>
-            </xsl:non-matching-substring>
-        </xsl:analyze-string>-->
     </xsl:template>
     <!-- Formy graficzne: etykiety scr, et, s -->
     <xsl:template match="lmilp:Forma/lmilp:Kursywa" mode="pass7" priority="10">
@@ -1458,7 +1437,7 @@
             <xsl:non-matching-substring>
                 <xsl:element name="tei:quote">
                     <!-- Uwagi w nawiasach -->
-                    <xsl:analyze-string select="." regex="( \( .+ \) )" flags="x">
+                    <xsl:analyze-string select="." regex="( \( .+? \) )" flags="x">
                         <xsl:matching-substring>
                             <xsl:element name="tei:note">
                                 <xsl:attribute name="type" select="'quote_note'"/>
@@ -1478,7 +1457,7 @@
                             </xsl:element>
                         </xsl:matching-substring>
                         <xsl:non-matching-substring>
-                            <xsl:analyze-string select="." regex="( \[ (.+) \] )" flags="x">
+                            <xsl:analyze-string select="." regex="( \[ (.+?) \] )" flags="x">
                                 <xsl:matching-substring>
                                     <xsl:element name="tei:add">
                                         <xsl:attribute name="resp" select="'#editor'"/>
@@ -1696,8 +1675,12 @@
     <xsl:template match="lmilp:grupaCytatu" mode="pass8">
         <xsl:element name="tei:cit">
             <xsl:apply-templates select="@*" mode="#current"/>
+            <xsl:if test="preceding-sibling::node()[1][self::text()][matches(normalize-space(.),'\($')] 
+                or following-sibling::node()[1][self::text()][matches(normalize-space(.),'^\)')]">
+                <xsl:attribute name="type" select="'inline'"/>
+            </xsl:if>
             <xsl:apply-templates select="node()|@*|text()" mode="#current"/>
-        </xsl:element>
+         </xsl:element>
     </xsl:template>
     <xsl:template match="lmilp:grupaNumeracji" mode="pass8">
         <!--Rozróznienie not i znaczeń -->
@@ -2776,7 +2759,7 @@
         <xsl:param name="string"/>
         <xsl:value-of select="translate( normalize-space($string), '[., ]', '' )"/>
     </xsl:function>
-    <xsl:template match="lmilp:Adres[parent::lmilp:grupaCytatu]" mode="pass12">
+    <xsl:template match="lmilp:Adres[parent::tei:cit]" mode="pass12">
         <xsl:if test="matches(.,'^\s*')">
             <xsl:text> </xsl:text>
         </xsl:if>
@@ -2785,7 +2768,7 @@
             <xsl:text> </xsl:text>
         </xsl:if>
     </xsl:template>
-    <xsl:template match="lmilp:Adres[not(parent::lmilp:grupaCytatu)]" mode="pass12">
+    <xsl:template match="lmilp:Adres[not(parent::tei:cit)]" mode="pass12">
         <xsl:if test="matches(.,'^\s*')">
             <xsl:text> </xsl:text>
         </xsl:if>
