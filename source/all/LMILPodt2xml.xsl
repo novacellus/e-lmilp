@@ -78,13 +78,16 @@
         </xsl:variable>
         <xsl:variable name="pass15">
             <xsl:apply-templates select="$pass14" mode="pass15"/>
-        </xsl:variable>        
-        <xsl:copy-of select="$pass15">
+        </xsl:variable>      
+        <xsl:variable name="pass16">
+            <xsl:apply-templates select="$pass15" mode="pass16"/>
+        </xsl:variable> 
+        <xsl:copy-of select="$pass16">
         </xsl:copy-of>
     </xsl:template>
     <!-- Szablon kopiowania -->
     <xsl:template match="@* | node()"
-        mode="pass2a pass2b pass2c pass3 pass4a pass4b pass4c pass5 pass6 pass7 pass8 pass9 pass10 pass11 pass12 pass13 pass14 pass15">
+        mode="pass2a pass2b pass2c pass3 pass4a pass4b pass4c pass5 pass6 pass7 pass8 pass9 pass10 pass11 pass12 pass13 pass14 pass15 pass16">
         <xsl:copy>
             <xsl:apply-templates mode="#current" select="@*|node()"/>
         </xsl:copy>
@@ -2913,8 +2916,67 @@
             <tei:emph> </tei:emph>
         </tei:gramGrp>-->
     </xsl:template>
-    <!-- Wyodrębnia przyimek z sekwencji: sq. ... -->
-        
+    
+    
+<!--    <xsl:template name="nestedStyles">
+        <xsl:for-each-group select="node()|text()" group-adjacent="name()">
+            <xsl:choose>
+                <xsl:when test="current-grouping-key()">
+                    <grupka>
+                        <xsl:for-each select=".">
+                            <xsl:element name="{current-grouping-key()}">
+                                <xsl:copy-of select="current-group()/node()|@*"/>
+                            </xsl:element>
+                        </xsl:for-each>
+                    </grupka>
+                </xsl:when>
+                <xsl:otherwise>
+                    <niegrupka>
+                        <xsl:copy-of select="."/>
+                    </niegrupka>
+                </xsl:otherwise>
+            </xsl:choose>
+        </xsl:for-each-group>
+    </xsl:template>
+    -->
+    <xsl:template match="*" mode="pass16" priority="10">
+        <xsl:copy>
+        <xsl:for-each select="@*">
+            <xsl:copy-of select="."/>
+        </xsl:for-each>
+         <xsl:for-each-group select="node()|text()" group-adjacent="name()">
+             <xsl:if test="current-grouping-key()">
+                 <xsl:choose>
+                     <xsl:when test="current-group()[1][self::tei:emph]">
+                        <xsl:element name="{current-grouping-key()}">
+                             <xsl:apply-templates select="current-group()/node()|text()" mode="#current"/>
+                        </xsl:element>
+                     </xsl:when>
+                     <xsl:otherwise>
+                         <xsl:apply-templates select="current-group()" mode="#current"/>
+                     </xsl:otherwise>
+                 </xsl:choose>
+             </xsl:if>
+            <xsl:if test="not(current-grouping-key())">
+                 <xsl:apply-templates select="current-group()" mode="#current"/>
+             </xsl:if>
+         </xsl:for-each-group>
+        </xsl:copy>
+    </xsl:template>
+    
+     <!-- Połączenie sąsiadujących stylów, rozdzielonych w wyniku poprzednich manipulacji (lista tagów uzupełniana w miarę odnajdywania błędów) -->
+<!--    
+         <xsl:template match="tei:entryFree" mode="pass16">
+             <xsl:copy>
+                 <xsl:attribute name="xml:id" select="@xml:id"/>
+                 <xsl:attribute name="n" select="@n"/>
+                 <xsl:for-each-group select="*" group-adjacent="name()">
+                    
+                     </xsl:if>
+                 </xsl:for-each-group>
+             </xsl:copy>
+     </xsl:template>
+    -->
 </xsl:stylesheet>
 <!--<regex>
     1:<xsl:value-of select="regex-group(1)"/>
