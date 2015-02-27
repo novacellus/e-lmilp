@@ -82,7 +82,7 @@
         <xsl:variable name="pass16">
             <xsl:apply-templates select="$pass15" mode="pass16"/>
         </xsl:variable> 
-        <xsl:copy-of select="$pass16">
+        <xsl:copy-of select="$pass12">
         </xsl:copy-of>
     </xsl:template>
     <!-- Szablon kopiowania -->
@@ -286,7 +286,7 @@
                         <xsl:for-each-group select="current-group()"
                             group-ending-with="lmilp:Cytacja">
                             <xsl:choose>
-                                <xsl:when test="current-group()[last()][self::lmilp:Cytacja]">
+                                <xsl:when test="current-group()[last()][self::lmilp:Cytacja[normalize-space(.) ne '']]">
                                     <xsl:element name="lmilp:grupaCytatu">
                                         <xsl:apply-templates select="current-group()"
                                             mode="#current"/>
@@ -2782,6 +2782,34 @@
         <xsl:if test="matches(.,'\s*$')">
             <xsl:text> </xsl:text>
         </xsl:if>
+    </xsl:template>
+    <!-- Znajduje cf. XXX -->
+    <xsl:template match="text()[normalize-space(.) ne '' and matches(.,'[A-Z]{2,}')][position() &lt; 5][preceding-sibling::tei:label[@norm='cf']]" mode="pass12">
+        <xsl:for-each select="tokenize(.,',')">
+           <xsl:analyze-string select="." regex="\[NRSTRONY:\d+\]">
+               <xsl:matching-substring>
+                   <xsl:value-of select="."/>
+               </xsl:matching-substring>
+               <xsl:non-matching-substring>
+                   <xsl:analyze-string select="." regex="([\d\.\s*]*[A-Z\|]+)(.*)">
+                       <xsl:matching-substring>
+                           <xsl:element name="tei:ref">
+                               <xsl:attribute name="type" select="'cf'"/>
+                               <xsl:attribute name="url">
+                                   <xsl:variable name="lemma" select="translate(regex-group(1),'[\s\|]','')"/>
+                                   <xsl:variable name="sense" select="string-join(tokenize(translate(regex-group(2),'\|\.',''),' '),'_')"/>
+                                   <xsl:value-of select="if( normalize-space($sense) ne '' and not( matches(normalize-space($sense), '^_+$' ) ) ) then ( concat($lemma, '#', $sense) ) else ($lemma)"/>
+                               </xsl:attribute>
+                               <xsl:value-of select="."/>
+                           </xsl:element>
+                       </xsl:matching-substring>
+                       <xsl:non-matching-substring>
+                           <xsl:value-of select="."/>
+                       </xsl:non-matching-substring>
+                   </xsl:analyze-string>
+               </xsl:non-matching-substring>
+           </xsl:analyze-string> 
+        </xsl:for-each>
     </xsl:template>
     <!-- Numery stron i wierszy -->
     <xsl:template match="node()/text()" mode="pass13">
