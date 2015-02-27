@@ -82,7 +82,7 @@
         <xsl:variable name="pass16">
             <xsl:apply-templates select="$pass15" mode="pass16"/>
         </xsl:variable> 
-        <xsl:copy-of select="$pass12">
+        <xsl:copy-of select="$pass16">
         </xsl:copy-of>
     </xsl:template>
     <!-- Szablon kopiowania -->
