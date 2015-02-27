@@ -2795,10 +2795,25 @@
                        <xsl:matching-substring>
                            <xsl:element name="tei:ref">
                                <xsl:attribute name="type" select="'cf'"/>
-                               <xsl:attribute name="url">
-                                   <xsl:variable name="lemma" select="translate(regex-group(1),'[\s\|]','')"/>
-                                   <xsl:variable name="sense" select="string-join(tokenize(translate(regex-group(2),'\|\.',''),' '),'_')"/>
-                                   <xsl:value-of select="if( normalize-space($sense) ne '' and not( matches(normalize-space($sense), '^_+$' ) ) ) then ( concat($lemma, '#', $sense) ) else ($lemma)"/>
+                               <xsl:attribute name="target">
+                                   <xsl:variable name="lemma" select="translate(regex-group(1),' \|','')"/>
+                                   <xsl:variable name="sense">
+                                       <!-- Sequence of sense numbers -->
+                                       <xsl:variable name="orig" select="tokenize(translate(regex-group(2),'\|\.',''),' ')"/>
+                                       <xsl:variable name="last" select="concat('sense_', $orig[normalize-space(.) ne ''][position() = last()] )"></xsl:variable>
+                                       <xsl:variable name="join" select="if (normalize-space( $orig[normalize-space(.) ne ''][position() = last()]) ne '' ) then (
+                                           concat(
+                                           string-join($orig[normalize-space(.) ne ''][position() &lt; last()],'_') ,
+                                           if ( exists ( $orig[normalize-space(.) ne ''][position() &lt; last()] ) ) then ('_') else ('') , 
+                                           $last
+                                           )
+                                           ) else ('')
+                                           "></xsl:variable>
+                                       <xsl:value-of select="$join"></xsl:value-of>
+                                   </xsl:variable>
+                                   <xsl:value-of select="(concat ('lemma:' ,
+                                       if( normalize-space($sense) ne '' and not( matches(normalize-space($sense), '^_+$' ) ) ) then ( concat($lemma, '#', $sense ) ) else ($lemma)
+                                       ) )"/>
                                </xsl:attribute>
                                <xsl:value-of select="."/>
                            </xsl:element>
