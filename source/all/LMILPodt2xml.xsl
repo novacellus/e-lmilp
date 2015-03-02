@@ -2446,9 +2446,10 @@
                                                         </xsl:element>
                                                     </xsl:when>
                                                     <xsl:otherwise>
-                                                        <xsl:element name="tei:emph">
+                                                       <!-- The line was producing emphs nested in def 
+                                                           <xsl:element name="tei:emph">-->
                                                             <xsl:value-of select="."/>
-                                                        </xsl:element>
+                                                        <!--</xsl:element>-->
                                                     </xsl:otherwise>
                                                 </xsl:choose>
                                             </xsl:otherwise>
