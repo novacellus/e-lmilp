@@ -1396,10 +1396,14 @@
                                         <xsl:value-of select="."/>
                                     </xsl:if>
                                     <xsl:if test="normalize-space(.) ne ''">
+                                        <xsl:analyze-string select="." regex="(,)">
+                                            <xsl:non-matching-substring>
                                         <xsl:element name="tei:orth">
                                             <xsl:attribute name="type" select="'variant'"/>
                                             <xsl:value-of select="."/>
                                         </xsl:element>
+                                            </xsl:non-matching-substring>
+                                        </xsl:analyze-string>
                                     </xsl:if>
                                         
                                     
