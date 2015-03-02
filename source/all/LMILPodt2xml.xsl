@@ -82,7 +82,7 @@
         <xsl:variable name="pass16">
             <xsl:apply-templates select="$pass15" mode="pass16"/>
         </xsl:variable> 
-        <xsl:copy-of select="$pass16">
+        <xsl:copy-of select="$pass7">
         </xsl:copy-of>
     </xsl:template>
     <!-- Szablon kopiowania -->
@@ -1108,12 +1108,20 @@
                     </xsl:with-param>
                 </xsl:call-template>
             </xsl:when>
+            <!-- Tagowanie cytatów w nawiasach w zalezności od pozycji w sekwencji -->
             <xsl:when test="matches(.,';')">
-                <xsl:for-each select="tokenize(.,';')">
+                <xsl:variable name="tokenized" select="tokenize(.,';')"/>
+                <xsl:variable name="tokenized_number" select="count($tokenized)"></xsl:variable>
+                <xsl:for-each select="$tokenized[position() &lt; $tokenized_number]">
                     <xsl:call-template name="adres_korekta">
                         <xsl:with-param name="string" select="."/>
                     </xsl:call-template>
-                    <xsl:value-of select="';'"/>
+                        <xsl:value-of select="';'"/>
+                </xsl:for-each>
+                <xsl:for-each select="$tokenized[position() = $tokenized_number]">
+                    <xsl:call-template name="adres_korekta">
+                        <xsl:with-param name="string" select="."/>
+                    </xsl:call-template>
                 </xsl:for-each>
             </xsl:when>
             <xsl:when test="matches(normalize-space($string),'supra')">
