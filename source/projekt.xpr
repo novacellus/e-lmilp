@@ -18,7 +18,22 @@
                         <scenarioAssociation-array>
                             <scenarioAssociation>
                                 <field name="url">
-                                    <String>2/content_abbr.xml</String>
+                                    <String>all/output/test.xml</String>
+                                </field>
+                                <field name="scenarioIds">
+                                    <list>
+                                        <String>test</String>
+                                    </list>
+                                </field>
+                                <field name="scenarioTypes">
+                                    <list>
+                                        <String>XSL</String>
+                                    </list>
+                                </field>
+                            </scenarioAssociation>
+                            <scenarioAssociation>
+                                <field name="url">
+                                    <String>2/content.xml</String>
                                 </field>
                                 <field name="scenarioIds">
                                     <list>
@@ -33,7 +48,22 @@
                             </scenarioAssociation>
                             <scenarioAssociation>
                                 <field name="url">
-                                    <String>2/content.xml</String>
+                                    <String>1/content.xml</String>
+                                </field>
+                                <field name="scenarioIds">
+                                    <list>
+                                        <String>LMILP-test</String>
+                                    </list>
+                                </field>
+                                <field name="scenarioTypes">
+                                    <list>
+                                        <String>XML</String>
+                                    </list>
+                                </field>
+                            </scenarioAssociation>
+                            <scenarioAssociation>
+                                <field name="url">
+                                    <String>2/content_abbr.xml</String>
                                 </field>
                                 <field name="scenarioIds">
                                     <list>
@@ -109,21 +139,6 @@
                             <scenarioAssociation>
                                 <field name="url">
                                     <String>3/content.xml</String>
-                                </field>
-                                <field name="scenarioIds">
-                                    <list>
-                                        <String>LMILP-test</String>
-                                    </list>
-                                </field>
-                                <field name="scenarioTypes">
-                                    <list>
-                                        <String>XML</String>
-                                    </list>
-                                </field>
-                            </scenarioAssociation>
-                            <scenarioAssociation>
-                                <field name="url">
-                                    <String>1/content.xml</String>
                                 </field>
                                 <field name="scenarioIds">
                                     <list>
@@ -339,7 +354,7 @@
                 <file name="7/content.xml"/>
             </folder>
             <folder name="test">
-                <file name="2/content.xml"/>
+                <file name="2/content_test.xml"/>
             </folder>
             <file name="all/BUGS.txt"/>
             <file name="all/LMILPodt2xml.xsl"/>

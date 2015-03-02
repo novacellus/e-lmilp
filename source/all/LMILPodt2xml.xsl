@@ -82,7 +82,7 @@
         <xsl:variable name="pass16">
             <xsl:apply-templates select="$pass15" mode="pass16"/>
         </xsl:variable> 
-        <xsl:copy-of select="$pass7">
+        <xsl:copy-of select="$pass16">
         </xsl:copy-of>
     </xsl:template>
     <!-- Szablon kopiowania -->
@@ -1405,16 +1405,11 @@
                                             </xsl:non-matching-substring>
                                         </xsl:analyze-string>
                                     </xsl:if>
-                                        
-                                    
-                                </xsl:non-matching-substring>
-                            </xsl:analyze-string> 
-                            
+                                        </xsl:non-matching-substring>
+                            </xsl:analyze-string>
                             <xsl:value-of select="regex-group(6)"/>
                         </xsl:for-each>
-                        
                     </xsl:matching-substring>
-                   
                     <xsl:non-matching-substring>
                         <xsl:analyze-string select="." regex="(\s*(scr\.|et|s\.)\s*)">
                             <xsl:matching-substring>
@@ -3021,9 +3016,7 @@
             <tei:emph> </tei:emph>
         </tei:gramGrp>-->
     </xsl:template>
-    
-    
-<!--    <xsl:template name="nestedStyles">
+    <!--    <xsl:template name="nestedStyles">
         <xsl:for-each-group select="node()|text()" group-adjacent="name()">
             <xsl:choose>
                 <xsl:when test="current-grouping-key()">
