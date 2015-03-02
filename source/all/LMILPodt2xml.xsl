@@ -835,7 +835,6 @@
             </xsl:for-each-group>
         </xsl:copy>
     </xsl:template>
-
     <!-- Etymologia / anomalia -->
     <xsl:template match="lmilp:Haslo" mode="pass5">
         <xsl:copy>
@@ -1033,6 +1032,56 @@
             </xsl:for-each-group>
 
         </xsl:copy>
+    </xsl:template>
+    <!-- Korekta: kursywne noty w cytatach (nieprawidłowe zagnieżdżenie), np. [( ]), ([ )] -->
+    <xsl:template match="lmilp:Cytacja" mode="pass6">
+        <xsl:element name="lmilp:Cytacja">
+            <!-- Wariant [( ]) -->
+            <xsl:analyze-string select="." regex="( \[ ([\s\.\|]*) \( (.[^\)\]]+?) \] ([\s\.\|]*) \) )" flags="x">
+                <xsl:matching-substring>
+                    <xsl:variable name="reconstruct">
+                        <xsl:value-of select="concat('[' ,regex-group(2) , '(', regex-group(3) , ')' , regex-group(4), ']' )"/>
+                    </xsl:variable>
+                    <xsl:value-of select="$reconstruct"/>
+                </xsl:matching-substring>
+                <xsl:non-matching-substring>
+                    <!-- Wariant ([ )] -->
+                    <xsl:analyze-string select="." regex="( \( ([\s\.\|]*) \[ (.[^\)\]]+?) \) ([\s\.\|]*) \] )" flags="x">
+                        <xsl:matching-substring>
+                            <xsl:variable name="reconstruct">
+                                <xsl:value-of select="concat('(' ,regex-group(2) , '[', regex-group(3) , ']' , ')' ,regex-group(4) )"/>
+                            </xsl:variable>
+                            <xsl:value-of select="$reconstruct"/>
+                        </xsl:matching-substring>
+                        <xsl:non-matching-substring>
+                            <!-- Wariant [ ( ) znaki pomiędzy ] -->
+                            <xsl:analyze-string select="." regex="( \[ ([\s\.\|]*) \( (.[^\)\]]+?) \) ([\s\.\|]*) \] )" flags="x">
+                                <xsl:matching-substring>
+                                    <xsl:variable name="reconstruct">
+                                        <xsl:value-of select="concat('[' ,regex-group(2) , '(', regex-group(3) , ')' , regex-group(4), ']' )"/>
+                                    </xsl:variable>
+                                    <xsl:value-of select="$reconstruct"/>
+                                </xsl:matching-substring>
+                                <xsl:non-matching-substring>
+                                <!-- Wariant ( [ ] znaki pomiędzy ) -->
+                                <xsl:analyze-string select="." regex="( \( ([\s\.\|]*) \[ (.[^\)\]]+?) \] ([\s\.\|]*) \) )" flags="x">
+                                    <xsl:matching-substring>
+                                        <xsl:variable name="reconstruct">
+                                            <xsl:value-of select="concat('(' ,regex-group(2) , '[', regex-group(3) , ']' , regex-group(4), ')' )"/>
+                                        </xsl:variable>
+                                        <xsl:value-of select="$reconstruct"/>
+                                    </xsl:matching-substring>
+                                    <xsl:non-matching-substring>
+                                        <xsl:value-of select="."/>
+                                    </xsl:non-matching-substring>
+                            </xsl:analyze-string>
+                                </xsl:non-matching-substring>
+                            </xsl:analyze-string>
+                    </xsl:non-matching-substring>
+                </xsl:analyze-string>
+                </xsl:non-matching-substring>
+            </xsl:analyze-string>
+        </xsl:element>
     </xsl:template>
     <!-- Korekta: adresów oddzielonych średnikiem -->
     <xsl:template match="lmilp:Adres" mode="pass7">
