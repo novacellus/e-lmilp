@@ -78,11 +78,11 @@
         </xsl:variable>
         <xsl:variable name="pass15">
             <xsl:apply-templates select="$pass14" mode="pass15"/>
-        </xsl:variable>   
+        </xsl:variable>      
         <xsl:variable name="pass16">
             <xsl:apply-templates select="$pass15" mode="pass16"/>
-        </xsl:variable>   
-        <xsl:copy-of select="$pass7">
+        </xsl:variable> 
+        <xsl:copy-of select="$pass16">
         </xsl:copy-of>
     </xsl:template>
     <!-- Szablon kopiowania -->
@@ -286,7 +286,7 @@
                         <xsl:for-each-group select="current-group()"
                             group-ending-with="lmilp:Cytacja">
                             <xsl:choose>
-                                <xsl:when test="current-group()[last()][self::lmilp:Cytacja]">
+                                <xsl:when test="current-group()[last()][self::lmilp:Cytacja[normalize-space(.) ne '']]">
                                     <xsl:element name="lmilp:grupaCytatu">
                                         <xsl:apply-templates select="current-group()"
                                             mode="#current"/>
@@ -835,7 +835,6 @@
             </xsl:for-each-group>
         </xsl:copy>
     </xsl:template>
-
     <!-- Etymologia / anomalia -->
     <xsl:template match="lmilp:Haslo" mode="pass5">
         <xsl:copy>
@@ -1034,6 +1033,56 @@
 
         </xsl:copy>
     </xsl:template>
+    <!-- Korekta: kursywne noty w cytatach (nieprawidłowe zagnieżdżenie), np. [( ]), ([ )] -->
+    <xsl:template match="lmilp:Cytacja" mode="pass6">
+        <xsl:element name="lmilp:Cytacja">
+            <!-- Wariant [( ]) -->
+            <xsl:analyze-string select="." regex="( \[ ([\s\.\|]*) \( (.[^\)\]]+?) \] ([\s\.\|]*) \) )" flags="x">
+                <xsl:matching-substring>
+                    <xsl:variable name="reconstruct">
+                        <xsl:value-of select="concat('[' ,regex-group(2) , '(', regex-group(3) , ')' , regex-group(4), ']' )"/>
+                    </xsl:variable>
+                    <xsl:value-of select="$reconstruct"/>
+                </xsl:matching-substring>
+                <xsl:non-matching-substring>
+                    <!-- Wariant ([ )] -->
+                    <xsl:analyze-string select="." regex="( \( ([\s\.\|]*) \[ (.[^\)\]]+?) \) ([\s\.\|]*) \] )" flags="x">
+                        <xsl:matching-substring>
+                            <xsl:variable name="reconstruct">
+                                <xsl:value-of select="concat('(' ,regex-group(2) , '[', regex-group(3) , ']' , ')' ,regex-group(4) )"/>
+                            </xsl:variable>
+                            <xsl:value-of select="$reconstruct"/>
+                        </xsl:matching-substring>
+                        <xsl:non-matching-substring>
+                            <!-- Wariant [ ( ) znaki pomiędzy ] -->
+                            <xsl:analyze-string select="." regex="( \[ ([\s\.\|]*) \( (.[^\)\]]+?) \) ([\s\.\|]*) \] )" flags="x">
+                                <xsl:matching-substring>
+                                    <xsl:variable name="reconstruct">
+                                        <xsl:value-of select="concat('[' ,regex-group(2) , '(', regex-group(3) , ')' , regex-group(4), ']' )"/>
+                                    </xsl:variable>
+                                    <xsl:value-of select="$reconstruct"/>
+                                </xsl:matching-substring>
+                                <xsl:non-matching-substring>
+                                <!-- Wariant ( [ ] znaki pomiędzy ) -->
+                                <xsl:analyze-string select="." regex="( \( ([\s\.\|]*) \[ (.[^\)\]]+?) \] ([\s\.\|]*) \) )" flags="x">
+                                    <xsl:matching-substring>
+                                        <xsl:variable name="reconstruct">
+                                            <xsl:value-of select="concat('(' ,regex-group(2) , '[', regex-group(3) , ']' , regex-group(4), ')' )"/>
+                                        </xsl:variable>
+                                        <xsl:value-of select="$reconstruct"/>
+                                    </xsl:matching-substring>
+                                    <xsl:non-matching-substring>
+                                        <xsl:value-of select="."/>
+                                    </xsl:non-matching-substring>
+                            </xsl:analyze-string>
+                                </xsl:non-matching-substring>
+                            </xsl:analyze-string>
+                    </xsl:non-matching-substring>
+                </xsl:analyze-string>
+                </xsl:non-matching-substring>
+            </xsl:analyze-string>
+        </xsl:element>
+    </xsl:template>
     <!-- Korekta: adresów oddzielonych średnikiem -->
     <xsl:template match="lmilp:Adres" mode="pass7">
         <xsl:call-template name="adres_korekta">
@@ -1059,12 +1108,20 @@
                     </xsl:with-param>
                 </xsl:call-template>
             </xsl:when>
+            <!-- Tagowanie cytatów w nawiasach w zalezności od pozycji w sekwencji -->
             <xsl:when test="matches(.,';')">
-                <xsl:for-each select="tokenize(.,';')">
+                <xsl:variable name="tokenized" select="tokenize(.,';')"/>
+                <xsl:variable name="tokenized_number" select="count($tokenized)"></xsl:variable>
+                <xsl:for-each select="$tokenized[position() &lt; $tokenized_number]">
                     <xsl:call-template name="adres_korekta">
                         <xsl:with-param name="string" select="."/>
                     </xsl:call-template>
-                    <xsl:value-of select="';'"/>
+                        <xsl:value-of select="';'"/>
+                </xsl:for-each>
+                <xsl:for-each select="$tokenized[position() = $tokenized_number]">
+                    <xsl:call-template name="adres_korekta">
+                        <xsl:with-param name="string" select="."/>
+                    </xsl:call-template>
                 </xsl:for-each>
             </xsl:when>
             <xsl:when test="matches(normalize-space($string),'supra')">
@@ -1344,10 +1401,14 @@
                                         <xsl:value-of select="."/>
                                     </xsl:if>
                                     <xsl:if test="normalize-space(.) ne '|'">
+                                        <xsl:analyze-string select="." regex="(,)">
+                                            <xsl:non-matching-substring>
                                         <xsl:element name="tei:orth">
                                             <xsl:attribute name="type" select="'variant'"/>
                                             <xsl:value-of select="."/>
                                         </xsl:element>
+                                            </xsl:non-matching-substring>
+                                        </xsl:analyze-string>
                                     </xsl:if>
                                     <!--tmp
                                         <xsl:if test="normalize-space(.) eq '|'">
@@ -1359,9 +1420,7 @@
                             
                             <xsl:value-of select="regex-group(6)"/>
                         </xsl:for-each>
-                        
                     </xsl:matching-substring>
-                   
                     <xsl:non-matching-substring>
                         <xsl:analyze-string select="." regex="(\s*(scr\.|et|s\.)\s*)">
                             <xsl:matching-substring>
@@ -2460,9 +2519,10 @@
                                                         </xsl:element>
                                                     </xsl:when>
                                                     <xsl:otherwise>
-                                                        <xsl:element name="tei:emph">
+                                                       <!-- The line was producing emphs nested in def 
+                                                           <xsl:element name="tei:emph">-->
                                                             <xsl:value-of select="."/>
-                                                        </xsl:element>
+                                                        <!--</xsl:element>-->
                                                     </xsl:otherwise>
                                                 </xsl:choose>
                                             </xsl:otherwise>
@@ -2797,6 +2857,49 @@
             <xsl:text> </xsl:text>
         </xsl:if>
     </xsl:template>
+    <!-- Znajduje cf. XXX -->
+    <xsl:template match="text()[normalize-space(.) ne '' and matches(.,'[A-Z]{2,}')][position() &lt; 5][preceding-sibling::tei:label[@norm='cf']]" mode="pass12">
+        <xsl:for-each select="tokenize(.,',')">
+           <xsl:analyze-string select="." regex="\[NRSTRONY:\d+\]">
+               <xsl:matching-substring>
+                   <xsl:value-of select="."/>
+               </xsl:matching-substring>
+               <xsl:non-matching-substring>
+                   <xsl:analyze-string select="." regex="([\d\.\s*]*[A-Z\|]+)(.*)">
+                       <xsl:matching-substring>
+                           <xsl:element name="tei:ref">
+                               <xsl:attribute name="type" select="'cf'"/>
+                               <xsl:attribute name="target">
+                                   <xsl:variable name="lemma" select="translate(regex-group(1),' \|','')"/>
+                                   <xsl:variable name="sense">
+                                       <!-- Sequence of sense numbers -->
+                                       <xsl:variable name="orig" select="tokenize(translate(regex-group(2),'\|\.',''),' ')"/>
+                                       <xsl:variable name="last" select="concat('sense_', $orig[normalize-space(.) ne ''][position() = last()] )"></xsl:variable>
+                                       <xsl:variable name="join" select="if (normalize-space( $orig[normalize-space(.) ne ''][position() = last()]) ne '' ) then (
+                                           concat(
+                                           string-join($orig[normalize-space(.) ne ''][position() &lt; last()],'_') ,
+                                           if ( exists ( $orig[normalize-space(.) ne ''][position() &lt; last()] ) ) then ('_') else ('') , 
+                                           $last
+                                           )
+                                           ) else ('')
+                                           "></xsl:variable>
+                                       <xsl:value-of select="$join"></xsl:value-of>
+                                   </xsl:variable>
+                                   <xsl:value-of select="(concat ('lemma:' ,
+                                       if( normalize-space($sense) ne '' and not( matches(normalize-space($sense), '^_+$' ) ) ) then ( concat($lemma, '#', $sense ) ) else ($lemma)
+                                       ) )"/>
+                               </xsl:attribute>
+                               <xsl:value-of select="."/>
+                           </xsl:element>
+                       </xsl:matching-substring>
+                       <xsl:non-matching-substring>
+                           <xsl:value-of select="."/>
+                       </xsl:non-matching-substring>
+                   </xsl:analyze-string>
+               </xsl:non-matching-substring>
+           </xsl:analyze-string> 
+        </xsl:for-each>
+    </xsl:template>
     <!-- Numery stron i wierszy -->
     <xsl:template match="node()/text()" mode="pass13">
         <xsl:analyze-string select="." regex="\|">
@@ -2970,7 +3073,66 @@
         <xsl:apply-templates mode="pass16"/>
     </xsl:copy>-->
 </xsl:template>
-        
+
+    <!--    <xsl:template name="nestedStyles">
+        <xsl:for-each-group select="node()|text()" group-adjacent="name()">
+            <xsl:choose>
+                <xsl:when test="current-grouping-key()">
+                    <grupka>
+                        <xsl:for-each select=".">
+                            <xsl:element name="{current-grouping-key()}">
+                                <xsl:copy-of select="current-group()/node()|@*"/>
+                            </xsl:element>
+                        </xsl:for-each>
+                    </grupka>
+                </xsl:when>
+                <xsl:otherwise>
+                    <niegrupka>
+                        <xsl:copy-of select="."/>
+                    </niegrupka>
+                </xsl:otherwise>
+            </xsl:choose>
+        </xsl:for-each-group>
+    </xsl:template>
+    -->
+    <xsl:template match="*" mode="pass16" priority="10">
+        <xsl:copy>
+        <xsl:for-each select="@*">
+            <xsl:copy-of select="."/>
+        </xsl:for-each>
+         <xsl:for-each-group select="node()|text()" group-adjacent="name()">
+             <xsl:if test="current-grouping-key()">
+                 <xsl:choose>
+                     <xsl:when test="current-group()[1][self::tei:emph]">
+                        <xsl:element name="{current-grouping-key()}">
+                             <xsl:apply-templates select="current-group()/node()|text()" mode="#current"/>
+                        </xsl:element>
+                     </xsl:when>
+                     <xsl:otherwise>
+                         <xsl:apply-templates select="current-group()" mode="#current"/>
+                     </xsl:otherwise>
+                 </xsl:choose>
+             </xsl:if>
+            <xsl:if test="not(current-grouping-key())">
+                 <xsl:apply-templates select="current-group()" mode="#current"/>
+             </xsl:if>
+         </xsl:for-each-group>
+        </xsl:copy>
+    </xsl:template>
+    
+     <!-- Połączenie sąsiadujących stylów, rozdzielonych w wyniku poprzednich manipulacji (lista tagów uzupełniana w miarę odnajdywania błędów) -->
+<!--    
+         <xsl:template match="tei:entryFree" mode="pass16">
+             <xsl:copy>
+                 <xsl:attribute name="xml:id" select="@xml:id"/>
+                 <xsl:attribute name="n" select="@n"/>
+                 <xsl:for-each-group select="*" group-adjacent="name()">
+                    
+                     </xsl:if>
+                 </xsl:for-each-group>
+             </xsl:copy>
+     </xsl:template>
+    -->
 </xsl:stylesheet>
 <!--<regex>
     1:<xsl:value-of select="regex-group(1)"/>
