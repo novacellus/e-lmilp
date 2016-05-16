@@ -78,13 +78,16 @@
         </xsl:variable>
         <xsl:variable name="pass15">
             <xsl:apply-templates select="$pass14" mode="pass15"/>
-        </xsl:variable>        
-        <xsl:copy-of select="$pass15">
+        </xsl:variable>   
+        <xsl:variable name="pass16">
+            <xsl:apply-templates select="$pass15" mode="pass16"/>
+        </xsl:variable>   
+        <xsl:copy-of select="$pass7">
         </xsl:copy-of>
     </xsl:template>
     <!-- Szablon kopiowania -->
     <xsl:template match="@* | node()"
-        mode="pass2a pass2b pass2c pass3 pass4a pass4b pass4c pass5 pass6 pass7 pass8 pass9 pass10 pass11 pass12 pass13 pass14 pass15">
+        mode="pass2a pass2b pass2c pass3 pass4a pass4b pass4c pass5 pass6 pass7 pass8 pass9 pass10 pass11 pass12 pass13 pass14 pass15 pass16">
         <xsl:copy>
             <xsl:apply-templates mode="#current" select="@*|node()"/>
         </xsl:copy>
@@ -1254,12 +1257,12 @@
         </xsl:element>
     </xsl:template>
     <!-- Formy graficzne -->
-    <xsl:template match="lmilp:Forma/text()" mode="pass7">
+    <xsl:template match="lmilp:Forma/text()" mode="pass7">        
         <xsl:analyze-string select="."
-            regex="(
+            regex="^(
                 (\s*\d\.\s*|\s*I\.\s*)*   
                 (\[)*
-                ( ([A-Z\|]+(-*)[A-Z\|]+\?*) ((,*\s*|\s*) (et\|s\.)* ) )+               
+                ( (\**[A-Z\|]+(-*)[A-Z\|]+(-*)[A-Z\|]+\?*) ((,*\s*|\s*) (et\|s\.)* ) )+               
                 (\])*
                 )"
             flags="x">
@@ -1279,7 +1282,7 @@
                         </xsl:choose>
                     </xsl:element>                        
                 </xsl:if>
-                <xsl:for-each select="regex-group(4)">
+              <xsl:for-each select="regex-group(4)">
                     <xsl:element name="tei:orth">
                         <xsl:attribute name="rend" select="'case(allcaps)'"/>
                         <xsl:attribute name="type" select="'lemma'"/>
@@ -1287,22 +1290,26 @@
                             <xsl:attribute name="type" select="'reconstructed'"/>
                             <xsl:value-of select="regex-group(3)"/>
                         </xsl:if>
+                        <!-- Lemmaty poświadczone w źródłach obcych (w pierwszych tomach oznaczane *) -->
+                        <xsl:if test="matches(regex-group(5),'\*')">
+                            <xsl:attribute name="subtype" select="'foreign'"/>
+                        </xsl:if>
                         <xsl:value-of select="regex-group(5)"/>
-                        <xsl:value-of select="regex-group(8)"/>
+                        <xsl:value-of select="regex-group(9)"/>
                     </xsl:element>
                     <xsl:choose>
-                        <xsl:when test="normalize-space(regex-group(9)) ne ''">
+                        <xsl:when test="normalize-space(regex-group(10)) ne ''">
                             <xsl:element name="tei:label">
                                 <xsl:attribute name="type" select="'variants'"/>
-                                <xsl:value-of select="concat(regex-group(9),' ' )"/>
+                                <xsl:value-of select="concat(regex-group(10),' ' )"/>
                             </xsl:element>
                         </xsl:when>
                         <xsl:otherwise>                            
-                            <xsl:value-of select="regex-group(9)"></xsl:value-of>
+                            <xsl:value-of select="regex-group(10)"></xsl:value-of>
                         </xsl:otherwise>
                     </xsl:choose>
-                    <xsl:if test="regex-group(10)">
-                        <xsl:value-of select="regex-group(10)"/>
+                    <xsl:if test="regex-group(11)">
+                        <xsl:value-of select="regex-group(11)"/>
                     </xsl:if>
 
                 </xsl:for-each>
@@ -1315,7 +1322,7 @@
                     ( ([a-zA-Z\|\.]+)(,*) )+
                     )"
                     flags="x">
-                    <xsl:matching-substring>
+                    <xsl:matching-substring>                        
                         <xsl:if test="regex-group(2)">
                             <xsl:element name="tei:label">
                                 <xsl:attribute name="type" select="'variants'"/>
@@ -1323,7 +1330,7 @@
                                       <xsl:value-of select="regex-group(3)"/>
                             </xsl:element>
                         </xsl:if>
-                        <xsl:for-each select="regex-group(4)">
+                        <xsl:for-each select="regex-group(4)">                            
                             <xsl:analyze-string select="." regex="((\s|^)*(scr\.|et|s\.)(\s|$))">
                                 <xsl:matching-substring>
                                     <xsl:element name="tei:label">
@@ -1332,16 +1339,20 @@
                                     </xsl:element>
                                 </xsl:matching-substring>
                                 <xsl:non-matching-substring>
-                                    <xsl:if test="normalize-space(.) eq ''">
+                                    <!-- Formy zawierające wyłącznie znak podziału wiersza | -->
+                                    <xsl:if test="normalize-space(.) eq '|'">
                                         <xsl:value-of select="."/>
                                     </xsl:if>
-                                    <xsl:if test="normalize-space(.) ne ''">
+                                    <xsl:if test="normalize-space(.) ne '|'">
                                         <xsl:element name="tei:orth">
                                             <xsl:attribute name="type" select="'variant'"/>
                                             <xsl:value-of select="."/>
                                         </xsl:element>
                                     </xsl:if>
-                                        
+                                    <!--tmp
+                                        <xsl:if test="normalize-space(.) eq '|'">
+                                        <xsl:value-of select="."/>
+                                    </xsl:if>-->
                                     
                                 </xsl:non-matching-substring>
                             </xsl:analyze-string> 
@@ -1561,21 +1572,23 @@
     <xsl:function name="lmilp:entry-nFromForm">
         <xsl:param name="entry" as="node()"/>
         <xsl:variable name="nameNodeBefore">
-           <xsl:copy-of select="$entry//*[self::*/following::tei:orth[1][self::* is $entry/lmilp:Forma[1]/tei:orth[1]]]"/>
+            <xsl:copy-of select="$entry//*[self::*/following::tei:orth[1][self::* is $entry/lmilp:Forma[normalize-space(.) ne ''][1]/tei:orth[normalize-space(.) ne ''][1]]]"/>
         </xsl:variable>
         <xsl:variable name="nameNodeItself">
-            <xsl:copy-of select="$entry/lmilp:Forma[1]/tei:orth[1]"/>
+            <xsl:copy-of select="$entry/lmilp:Forma[1]/tei:orth[normalize-space(.) ne ''][1]"/>
         </xsl:variable>
         <xsl:variable name="nameString" select="concat(string-join ($nameNodeBefore,'') , string-join($nameNodeItself,'') )"/>
-        <xsl:variable name="nameStringPurged" select="translate($nameString,'[,-\s \?]','')"/>
+        <xsl:variable name="nameStringPurged" select="translate($nameString,'[,-\s \?\|\*]','')"/>
         <xsl:choose>
             <xsl:when test="normalize-space($nameStringPurged) eq ''">
-                <xsl:value-of select="'DUBIUM'"></xsl:value-of>
+                <xsl:value-of select="'dubious'"></xsl:value-of>
             </xsl:when>
             <xsl:otherwise>
                 <xsl:value-of select="$nameStringPurged"/>
             </xsl:otherwise>
-        </xsl:choose>
+        </xsl:choose><!--
+        nodeBefore <xsl:copy-of select="$nameNodeBefore"></xsl:copy-of>
+        nodeItselrf <xsl:copy-of select="$nameNodeItself"></xsl:copy-of>-->
     </xsl:function>
     <xsl:template match="lmilp:Forma" mode="pass8">
         <xsl:element name="tei:form">
@@ -1595,8 +1608,12 @@
                 <xsl:variable name="n">
                     <xsl:value-of select="lmilp:entry-nFromForm(.)"/>
                 </xsl:variable>
-                <xsl:attribute name="xml:id" select="generate-id()"/>
+                <!-- Hasła o pustych @n - @subtype = "dubious", @n - dubious -->
                 <xsl:attribute name="n" select="$n"/>
+                <xsl:if test="$n eq 'dubious'">
+                    <xsl:attribute name="subtype" select="'dubious'"></xsl:attribute>                    
+                </xsl:if>
+                
                 <xsl:if
                     test=".[not(descendant::lmilp:Definicjaa)] and .[matches(.,'[A-Z]+\s*cf\.')]">
                     <xsl:attribute name="type" select="'xref'"/>
@@ -2914,6 +2931,45 @@
         </tei:gramGrp>-->
     </xsl:template>
     <!-- Wyodrębnia przyimek z sekwencji: sq. ... -->
+        
+<xsl:template match="tei:body" mode="pass16">
+    <xsl:for-each-group select="tei:entryFree" group-adjacent="@n">  
+            <xsl:for-each select="current-group()">
+                <xsl:variable name="ident">
+                    <xsl:choose>
+                        <!-- Jeśli w grupie znajduje się więcej niż jeden element o tym samym @n... -->
+                    <xsl:when test="count(current-group()) > 1">
+                        <xsl:value-of select="concat(@n,'.',position())"/>
+                    </xsl:when>
+                    <xsl:otherwise>
+                        <xsl:value-of select="@n"/>
+                    </xsl:otherwise>
+                    </xsl:choose>
+                </xsl:variable>                
+                <xsl:copy>
+                    <xsl:attribute name="xml:id">
+                        <!-- Automatyczny identyfikator dla wątpliwych lemmatów -->
+                        <xsl:choose>
+                            <xsl:when test="@subtype eq 'dubious'">
+                            <xsl:value-of select="concat($ident,'-', generate-id())"/>
+                        </xsl:when>
+                        <xsl:otherwise>
+                            <xsl:value-of select="$ident"/>
+                        </xsl:otherwise>
+                        </xsl:choose>
+                    </xsl:attribute>
+                    <xsl:apply-templates select="@*" mode="#current"/>
+                    <xsl:apply-templates select="node()|text()" mode="#current"/>
+                </xsl:copy>
+            </xsl:for-each>
+    </xsl:for-each-group>
+<!--    <xsl:copy>
+        <xsl:apply-templates select="@*" mode="pass16"/>
+        <xsl:attribute name="n_canon" select="concat(@n,'_',@xml:id)"></xsl:attribute>
+        <xsl:attribute name="xml:id" select="concat(@n,position())"/>        
+        <xsl:apply-templates mode="pass16"/>
+    </xsl:copy>-->
+</xsl:template>
         
 </xsl:stylesheet>
 <!--<regex>
